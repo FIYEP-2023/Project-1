@@ -27,6 +27,8 @@ library(broom)
 (data <- read.csv('Factors Affecting Extinction.csv', header=T))
 ```
 
+# (1) Initial Plotting
+
 There are four different combinations of Size and Status, LR, LM, SR and SM. If we want to find the correlation between *extinction time* as a function of *pairs*, we can make a regression line with *pairs* as the predictor value and *extinction time* as the predicted value.
 
 ```{r}
@@ -38,6 +40,24 @@ ggplot(data, aes(x = Pairs, y = Time)) +
   
   stat_poly_eq(formula = y ~ x,
   aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
-  parse = TRUE)
+  parse = TRUE) +
+  
+  theme_bw()
 ```
 
+# (2) Residual plot of raw (not transformed) data
+
+```{r}
+ggplot(data,
+  mapping = aes(x = Pairs,
+                y = resid(lm(Time ~ Pairs, data = data)))) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  geom_hline(yintercept = 0, color = "red") +
+  xlab("Pairs") +
+  ylab("Residuals") +
+  labs(title = "Residual Plot") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = "bottom")
+```
