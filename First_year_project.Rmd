@@ -4,11 +4,11 @@ output: pdf_document
 date: "2023-02-07"
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, results=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, results=FALSE, message=FALSE}
 if (!require("pacman")) install.packages("pacman")
 if (!require("ggplot2")) install.packages("ggplot2")
 if (!require("ggpmisc")) install.packages("ggpmisc")
@@ -23,8 +23,12 @@ library(ggplot2)
 library(broom)
 ```
 
+# Question one
+*Begin with describing and fitting a full model in which the intercepts and slopes of the extinction times versus numbers of pairs may be different in all four combinations of size and migratory status.*  
+We start by importing the dataset directly from the csv file and saving it to the data variable:
+
 ```{r}
-(data <- read.csv('Factors Affecting Extinction.csv', header=T))
+head(data <- read.csv('Factors Affecting Extinction.csv', header=T))
 ```
 
 # (1) Initial Plotting
