@@ -27,6 +27,8 @@ library(broom)
 (data <- read.csv('Factors Affecting Extinction.csv', header=T))
 ```
 
+There are four different combinations of Size and Status, LR, LM, SR and SM. If we want to find the correlation between *extinction time* as a function of *pairs*, we can make a regression line with *pairs* as the predictor value and *extinction time* as the predicted value.
+
 ```{r}
 ggplot(data, aes(x = Pairs, y = Time)) +
   geom_point() +
@@ -38,5 +40,4 @@ ggplot(data, aes(x = Pairs, y = Time)) +
   aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
   parse = TRUE)
 ```
-
 
