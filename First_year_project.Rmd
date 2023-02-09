@@ -34,7 +34,7 @@ ggplot(data, aes(x = Pairs, y = Time)) +
   geom_point() +
   facet_grid(Size ~ Status) +
   theme(legend.position = "top") +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = y ~ x) +
   
   stat_poly_eq(formula = y ~ x,
   aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
