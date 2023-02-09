@@ -28,7 +28,7 @@ library(broom)
 We start by importing the dataset directly from the csv file and saving it to the data variable:
 
 ```{r}
-(data <- read.csv('Factors Affecting Extinction.csv', header=T))
+head(data <- read.csv('Factors Affecting Extinction.csv', header=T))
 ```
 
 There are four different combinations of Size and Status, LR, LM, SR and SM. If we want to find the correlation between *extinction time* as a function of *pairs*, we can make a regression line with *pairs* as the predictor value and *extinction time* as the predicted value.
