@@ -24,7 +24,8 @@ library(broom)
 ```
 
 # Question one
-*Begin with describing and fitting a full model in which the intercepts and slopes of the extinction times versus numbers of pairs may be different in all four combinations of size and migratory status.*  
+
+*Begin with describing and fitting a full model in which the intercepts and slopes of the extinction times versus numbers of pairs may be different in all four combinations of size and migratory status.*\
 We start by importing the dataset directly from the csv file and saving it to the data variable:
 
 ```{r}
