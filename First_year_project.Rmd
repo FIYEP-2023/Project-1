@@ -1,6 +1,6 @@
 ---
 title: "First_Year_Project"
-output: html_document
+output: pdf_document
 date: "2023-02-07"
 ---
 
@@ -8,7 +8,7 @@ date: "2023-02-07"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, echo=FALSE}
 if (!require("pacman")) install.packages("pacman")
 if (!require("ggplot2")) install.packages("ggplot2")
 if (!require("ggpmisc")) install.packages("ggpmisc")
@@ -27,16 +27,17 @@ library(broom)
 (data <- read.csv('Factors Affecting Extinction.csv', header=T))
 ```
 
+There are four different combinations of Size and Status, LR, LM, SR and SM. If we want to find the correlation between *extinction time* as a function of *pairs*, we can make a regression line with *pairs* as the predictor value and *extinction time* as the predicted value.
+
 ```{r}
 ggplot(data, aes(x = Pairs, y = Time)) +
   geom_point() +
   facet_grid(Size ~ Status) +
   theme(legend.position = "top") +
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", formula = y ~ x) +
   
   stat_poly_eq(formula = y ~ x,
   aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
   parse = TRUE)
 ```
-
 
