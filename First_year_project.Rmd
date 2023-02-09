@@ -8,7 +8,7 @@ date: "2023-02-07"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, echo=FALSE, results=FALSE}
+```{r, echo=FALSE, results=FALSE, message=FALSE}
 if (!require("pacman")) install.packages("pacman")
 if (!require("ggplot2")) install.packages("ggplot2")
 if (!require("ggpmisc")) install.packages("ggpmisc")
