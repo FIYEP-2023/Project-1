@@ -1,0 +1,42 @@
+---
+title: "First_Year_Project"
+output: html_document
+date: "2023-02-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if (!require("pacman")) install.packages("pacman")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("ggpmisc")) install.packages("ggpmisc")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("ggsignif")) install.packages("ggsignif")
+library("ggplot2")
+library("ggpmisc")
+library("ggpubr")
+library("ggsignif")
+library(tibble)
+library(ggplot2)
+library(broom)
+```
+
+```{r}
+(data <- read.csv('Factors Affecting Extinction.csv', header=T))
+```
+
+```{r}
+ggplot(data, aes(x = Pairs, y = Time)) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  theme(legend.position = "top") +
+  geom_smooth(method = "lm") +
+  
+  stat_poly_eq(formula = y ~ x,
+  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
+  parse = TRUE)
+```
+
+
