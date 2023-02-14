@@ -84,110 +84,88 @@ head(data)
 Plotting of log_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
-ggplot(data, aes(x = Pairs, y = log_time)) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  theme(legend.position = "top") +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  
-  stat_poly_eq(formula = y ~ x,
-  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
-  parse = TRUE) +
-  
-  labs(title = "Residual Plot (log_time)") +
-  theme_bw()
+transform_plots <- function(type, data, Y, transformation) {
+  # type is one of "regres", "resid"
+  data$Y = Y
+  model <- lm(Time ~ Pairs, data = data)
+  y_hat <- predict(model, newdata = data)
+  result <- switch(
+    type,
+    "regres" = ggplot(
+      data,
+      aes(x = Pairs, y = Y)
+    )
+    + geom_point()
+    + facet_grid(Size ~ Status) 
+    + theme(legend.position = "top")
+    + geom_smooth(
+        method = "lm", 
+        formula = y ~ x
+      )
+    + stat_poly_eq(
+      formula = y ~ x,
+      aes(
+        label = paste(
+          after_stat(
+            eq.label
+          ), 
+          after_stat(
+            rr.label
+          ), 
+          sep = "~~~"
+        )
+      ),
+      parse = TRUE
+    )
+    + labs(
+      title = sprintf("Raw data (%s)", transformation)
+    )
+    + ylab(
+      sprintf("Time (%s)", transformation)
+    )
+    + theme_bw(),
+    
+    "resid" = ggplot(
+      data,
+      mapping = aes(
+        x = y_hat,
+        y = resid(
+          lm(
+              Y ~ Pairs, 
+              data = data
+            )
+          )
+        )
+      )
+    + geom_point()
+    + facet_grid(Size ~ Status)
+    + geom_hline(
+        yintercept = 0, 
+        color = "red"
+      )
+    + xlab("Predicted value")
+    + ylab("Standarized Residuals")
+    + labs(
+      title = sprintf(
+        "Standardized Residual Plot (raw data) (%s transformation)",
+        transformation)
+      )
+    + theme_bw()
+    + theme(plot.title = element_text(hjust = 0.5))
+    + theme(legend.position = "bottom")
+
+  )
+  return(result)
+}
+
+for (transformation in c("log", "sqrt", "inverse")) {
+  new_Y <- switch(
+    transformation,
+    "log" = log2(data$Time),
+    "sqrt" = sqrt(data$Time),
+    "inverse" = 1/data$Time
+  )
+  print(transform_plots("regres", data, new_Y, transformation))
+  print(transform_plots("resid", data, new_Y, transformation))
+}
 ```
-\newpage
-Residual plot of log_time:
-
-```{r echo=FALSE, results=FALSE, message=FALSE}
-ggplot(data,
-  mapping = aes(x = log_time,
-                y = resid(lm(log_time ~ Pairs, data = data)))) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  geom_hline(yintercept = 0, color = "red") +
-  xlab("Pairs") +
-  ylab("Residuals") +
-  labs(title = "Residual Plot (log_time)") +
-  theme_bw() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(legend.position = "bottom")
-```
-
-```{r}
-model <- lm(log_time ~ Pairs, data = data)
-y_hat <- predict(model, newdata = data)
-```
-
-
-Plotting of sqrt_time:
-
-```{r echo=FALSE, results=FALSE, message=FALSE}
-ggplot(data, aes(x = Pairs, y = sqrt_time)) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  theme(legend.position = "top") +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  
-  stat_poly_eq(formula = y ~ x,
-  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
-  parse = TRUE) +
-  
-  labs(title = "Sqrt_time") +
-  theme_bw()
-```
-\newpage
-Residual plot of sqrt_time:
-
-```{r echo=FALSE, results=FALSE, message=FALSE}
-ggplot(data,
-  mapping = aes(x = Pairs,
-                y = resid(lm(sqrt_time ~ Pairs, data = data)))) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  geom_hline(yintercept = 0, color = "red") +
-  xlab("Pairs") +
-  ylab("Residuals") +
-  labs(title = "Residual Plot (sqrt_time)") +
-  theme_bw() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(legend.position = "bottom")
-```
-\newpage
-Plotting of inverse_time:
-
-```{r echo=FALSE, results=FALSE, message=FALSE}
-ggplot(data, aes(x = Pairs, y = inverse_time)) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  theme(legend.position = "top") +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  
-  stat_poly_eq(formula = y ~ x,
-  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
-  parse = TRUE) +
-  
-  labs(title = "Inverse_time") +
-  theme_bw()
-```
-\newpage
-Residual plot of inverse_time:
-
-```{r echo=FALSE, results=FALSE, message=FALSE}
-ggplot(data,
-  mapping = aes(x = Pairs,
-                y = resid(lm(inverse_time ~ Pairs, data = data)))) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  geom_hline(yintercept = 0, color = "red") +
-  xlab("Pairs") +
-  ylab("Residuals") +
-  labs(title = "Residual Plot (inverse_time)") +
-  theme_bw() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(legend.position = "bottom")
-```
-
-
-# (4) 
