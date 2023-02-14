@@ -52,17 +52,21 @@ ggplot(data, aes(x = Pairs, y = Time)) +
 ```
 
 # (2) Residual plot of raw (not transformed) data
+# This is the ONLY correct residual plot
 
 ```{r}
+model <- lm(Time ~ Pairs, data = data)
+y_hat <- predict(model, newdata = data)
+
 ggplot(data,
-  mapping = aes(x = Pairs,
+  mapping = aes(x = y_hat,
                 y = resid(lm(Time ~ Pairs, data = data)))) +
   geom_point() +
   facet_grid(Size ~ Status) +
   geom_hline(yintercept = 0, color = "red") +
-  xlab("Pairs") +
-  ylab("Residuals") +
-  labs(title = "Residual Plot (raw data)") +
+  xlab("Predicted value") +
+  ylab("Standarized Residuals") +
+  labs(title = "Standardized Residual Plot (raw data)") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5)) +
   theme(legend.position = "bottom")
@@ -98,7 +102,7 @@ Residual plot of log_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
 ggplot(data,
-  mapping = aes(x = Pairs,
+  mapping = aes(x = log_time,
                 y = resid(lm(log_time ~ Pairs, data = data)))) +
   geom_point() +
   facet_grid(Size ~ Status) +
@@ -110,7 +114,13 @@ ggplot(data,
   theme(plot.title = element_text(hjust = 0.5)) +
   theme(legend.position = "bottom")
 ```
-\newpage
+
+```{r}
+model <- lm(log_time ~ Pairs, data = data)
+y_hat <- predict(model, newdata = data)
+```
+
+
 Plotting of sqrt_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
@@ -180,9 +190,4 @@ ggplot(data,
 ```
 
 
-
-
-
-
-
-
+# (4) 
