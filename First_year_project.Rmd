@@ -76,7 +76,7 @@ data$sqrt_time <- sqrt(data$Time)
 data$inverse_time <- 1/data$Time
 head(data)
 ```
-
+\newpage
 Plotting of log_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
@@ -93,6 +93,7 @@ ggplot(data, aes(x = Pairs, y = log_time)) +
   labs(title = "Residual Plot (log_time)") +
   theme_bw()
 ```
+\newpage
 Residual plot of log_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
@@ -109,7 +110,7 @@ ggplot(data,
   theme(plot.title = element_text(hjust = 0.5)) +
   theme(legend.position = "bottom")
 ```
-
+\newpage
 Plotting of sqrt_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
@@ -126,7 +127,7 @@ ggplot(data, aes(x = Pairs, y = sqrt_time)) +
   labs(title = "Sqrt_time") +
   theme_bw()
 ```
-
+\newpage
 Residual plot of sqrt_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
@@ -143,7 +144,7 @@ ggplot(data,
   theme(plot.title = element_text(hjust = 0.5)) +
   theme(legend.position = "bottom")
 ```
-
+\newpage
 Plotting of inverse_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
@@ -160,6 +161,7 @@ ggplot(data, aes(x = Pairs, y = inverse_time)) +
   labs(title = "Inverse_time") +
   theme_bw()
 ```
+\newpage
 Residual plot of inverse_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
