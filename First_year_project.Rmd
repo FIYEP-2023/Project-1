@@ -94,6 +94,23 @@ ggplot(data, aes(x = Pairs, y = log_time)) +
   theme_bw()
 ```
 
+```{r}
+ggplot(data, aes(x = Pairs, y=Time)) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  theme(legend.position = "top") +
+# geom_smooth where method y in log_base2 form
+  geom_smooth(method = "lm", se = FALSE, formula = y ~ log(x, base = 2)) +
+  
+  stat_poly_eq(formula = y ~ x,
+  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
+  parse = TRUE) +
+  
+  labs(title = "Residual Plot (log_time)") +
+  theme_bw()
+```
+
+
 Residual plot of log_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
