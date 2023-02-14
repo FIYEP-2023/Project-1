@@ -44,6 +44,7 @@ ggplot(data, aes(x = Pairs, y = Time)) +
   aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
   parse = TRUE) +
   
+  labs(title = "Raw data") +
   theme_bw()
 ```
 
@@ -58,76 +59,120 @@ ggplot(data,
   geom_hline(yintercept = 0, color = "red") +
   xlab("Pairs") +
   ylab("Residuals") +
-  labs(title = "Residual Plot") +
+  labs(title = "Residual Plot (raw data)") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5)) +
   theme(legend.position = "bottom")
 ```
 
-The data points on all the residual plots have a downward trend, not perfectly following the regression line.  
-  
-# (3) Transformations  
+# (3) Transformations of time to log_time, sqrt_time, inverse_time
 We now try different transformations on the data to see if we can get a better fitted regression line. We try 3 different transformation: log("time"), sqrt("time") and 1/("time").  
 
-## log("time")  
-```{r, echo=FALSE}
-ggplot(data, aes(x = Pairs, y = log(Time))) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  theme(legend.position = "top") +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  
-  stat_poly_eq(formula = y ~ x,
-  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
-  parse = TRUE) +
-  
-  theme_bw()
-```
-
-## sqrt("time")
-```{r, echo=FALSE}
-ggplot(data, aes(x = Pairs, y = sqrt(Time))) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  theme(legend.position = "top") +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  
-  stat_poly_eq(formula = y ~ x,
-  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
-  parse = TRUE) +
-  
-  theme_bw()
-```
-
-## 1/("time")
-```{r, echo=FALSE}
-ggplot(data, aes(x = Pairs, y = 1/Time)) +
-  geom_point() +
-  facet_grid(Size ~ Status) +
-  theme(legend.position = "top") +
-  geom_smooth(method = "lm", formula = y ~ x) +
-  
-  stat_poly_eq(formula = y ~ x,
-  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
-  parse = TRUE) +
-  
-  theme_bw()
-```
-We can see that doing a natural logarithm transformation on time provides the best fitting line of any of the transformation, and the fit is even better than the base case with no transformation.  
-The risidual plot for the log("time") transformation is shown below.  
 ```{r}
+data$log_time <- log2(data$Time)
+data$sqrt_time <- sqrt(data$Time)
+data$inverse_time <- 1/data$Time
+head(data)
+```
+
+Plotting of log_time:
+
+```{r echo=FALSE, results=FALSE, message=FALSE}
+ggplot(data, aes(x = Pairs, y = log_time)) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  theme(legend.position = "top") +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  
+  stat_poly_eq(formula = y ~ x,
+  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
+  parse = TRUE) +
+  
+  labs(title = "Residual Plot (log_time)") +
+  theme_bw()
+```
+
+Residual plot of log_time:
+
+```{r echo=FALSE, results=FALSE, message=FALSE}
 ggplot(data,
   mapping = aes(x = Pairs,
-                y = resid(lm(log(Time) ~ Pairs, data = data)))) +
+                y = resid(lm(log_time ~ Pairs, data = data)))) +
   geom_point() +
   facet_grid(Size ~ Status) +
   geom_hline(yintercept = 0, color = "red") +
   xlab("Pairs") +
   ylab("Residuals") +
-  labs(title = "Residual Plot") +
+  labs(title = "Residual Plot (log_time)") +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5)) +
   theme(legend.position = "bottom")
 ```
 
+Plotting of sqrt_time:
+
+```{r echo=FALSE, results=FALSE, message=FALSE}
+ggplot(data, aes(x = Pairs, y = sqrt_time)) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  theme(legend.position = "top") +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  
+  stat_poly_eq(formula = y ~ x,
+  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
+  parse = TRUE) +
+  
+  labs(title = "Sqrt_time") +
+  theme_bw()
+```
+
+Residual plot of sqrt_time:
+
+```{r echo=FALSE, results=FALSE, message=FALSE}
+ggplot(data,
+  mapping = aes(x = Pairs,
+                y = resid(lm(sqrt_time ~ Pairs, data = data)))) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  geom_hline(yintercept = 0, color = "red") +
+  xlab("Pairs") +
+  ylab("Residuals") +
+  labs(title = "Residual Plot (sqrt_time)") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = "bottom")
+```
+
+Plotting of inverse_time:
+
+```{r echo=FALSE, results=FALSE, message=FALSE}
+ggplot(data, aes(x = Pairs, y = inverse_time)) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  theme(legend.position = "top") +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  
+  stat_poly_eq(formula = y ~ x,
+  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
+  parse = TRUE) +
+  
+  labs(title = "Inverse_time") +
+  theme_bw()
+```
+Residual plot of inverse_time:
+
+```{r echo=FALSE, results=FALSE, message=FALSE}
+ggplot(data,
+  mapping = aes(x = Pairs,
+                y = resid(lm(inverse_time ~ Pairs, data = data)))) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  geom_hline(yintercept = 0, color = "red") +
+  xlab("Pairs") +
+  ylab("Residuals") +
+  labs(title = "Residual Plot (inverse_time)") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = "bottom")
+```
 As we can see, the downward trend of the points is no longer apparent. 
