@@ -168,3 +168,73 @@ for (transformation in c("log", "sqrt", "inverse")) {
 }
 ```
 As we can see, the downward trend of the points is no longer apparent. 
+# (3)  Removing outliers and comparing  
+We now proceed to remove outliers to see to what degree they affect the final result. We have opted to only graph and compare the logarithmic graph, as it has the best fit. We start by removing the maximum from the four plots:
+```{r}
+# Find the max and min values for each of the four plots
+get_outliers <- function(data) {
+  # Finds residual outliers and returns a vector in the form of (logical_max, logical_min) where logical_max is a vector of TRUE for the max value and FALSE everywhere else, and logical_min is the opposite.
+  residuals = resid(lm(log2(Time) ~ Pairs, data = data))
+  outliers <- c(
+    max(residuals),
+    min(residuals)
+  )
+  logicals <- data.frame(
+    max = residuals == outliers[1],
+    min = residuals == outliers[2]
+  )
+  return(logicals)
+}
+LR_mx <- get_outliers(data[
+  data$Size == "L" &
+  data$Status == "R",
+])
+LM_mx <- get_outliers(data[
+  data$Size == "L" &
+  data$Status == "M",
+])
+SR_mx <- get_outliers(data[
+  data$Size == "S" &
+  data$Status == "R",
+])
+SM_mx <- get_outliers(data[
+  data$Size == "S" &
+  data$Status == "M",
+])
+
+# Plot the graph by removing the four Max datapoints
+# Get IDs of rows outlier rows
+to_remove_ids = as.numeric(c(
+  row.names(data[data$Size == "L" & data$Status == "R",][LR_mx$max,]),
+  row.names(data[data$Size == "L" & data$Status == "M",][LM_mx$max,]),
+  row.names(data[data$Size == "S" & data$Status == "R",][SR_mx$max,]),
+  row.names(data[data$Size == "S" & data$Status == "M",][SM_mx$max,])
+))
+
+# Filter rows by removing those with the bad IDs
+max_filt_data <- data[-to_remove_ids,]
+
+# Plot time
+new_Y <- log2(max_filt_data$Time)
+print(transform_plots("regres", max_filt_data, new_Y, "log"))
+```
+Removing the max outliers from each plot significantly improved our $R^2$ value. If we also remove the min outliers, it will probably become an even better fit:
+```{r}
+# Plot the graph by removing the four Max datapoints
+# Get IDs of rows outlier rows (max only)
+to_remove_ids = as.numeric(c(
+  row.names(data[data$Size == "L" & data$Status == "R",][LR_mx$min | LR_mx$max,]),
+  row.names(data[data$Size == "L" & data$Status == "M",][LM_mx$min | LM_mx$max,]),
+  row.names(data[data$Size == "S" & data$Status == "R",][SR_mx$min | SR_mx$max,]),
+  row.names(data[data$Size == "S" & data$Status == "M",][SM_mx$min | SM_mx$max,])
+))
+
+# Filter rows by removing those with the bad IDs (max only)
+max_filt_data <- data[-to_remove_ids,]
+
+# Plot time
+new_Y <- log2(max_filt_data$Time) # Need to redefine this because the row count has changed
+print(transform_plots("regres", max_filt_data, new_Y, "log"))
+```
+Just removing the two extremes from the plots managed to increase one of our $R^2$ values from $0.53$ to $0.93$, an incredible improvement. Despite the fact that removing outliers improved the fit tremendously, it is a bad idea to do so. Data should only be removed if it has been either measured or written down incorrectly. Removing real data points is cherry-picking, and outliers can be a valuable insight into the data that has been collected. The mere fact that they can change line fittings this way is a testament to their influence - and thus their importance.  
+q
