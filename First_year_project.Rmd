@@ -168,7 +168,7 @@ for (transformation in c("log", "sqrt", "inverse")) {
 }
 ```
 As we can see, the downward trend of the points is no longer apparent. 
-# (3)  Removing outliers and comparing  
+# (4)  Removing outliers and comparing  
 We now proceed to remove outliers to see to what degree they affect the final result. We have opted to only graph and compare the logarithmic graph, as it has the best fit. We start by removing the maximum from the four plots:
 ```{r}
 # Find the max and min values for each of the four plots
