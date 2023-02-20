@@ -14,6 +14,8 @@ if (!require("ggplot2")) install.packages("ggplot2")
 if (!require("ggpmisc")) install.packages("ggpmisc")
 if (!require("ggpubr")) install.packages("ggpubr")
 if (!require("ggsignif")) install.packages("ggsignif")
+if (!require("nlme")) install.packages("nlme")
+if (!require("lsmeans")) install.packages("lsmeans")
 library("ggplot2")
 library("ggpmisc")
 library("ggpubr")
@@ -21,12 +23,14 @@ library("ggsignif")
 library(tibble)
 library(ggplot2)
 library(broom)
+library(nlme)
+library(lsmeans)
 ```
 
 We start by importing the dataset directly from the csv file and saving it to the data variable:
 
 ```{r}
-head(data <- read.csv('Factors Affecting Extinction.csv', header=T))
+head(data <- read.csv('Factors_Affecting_Extinction.csv', header=T))
 ```
 
 # (1) Initial Plotting
@@ -49,7 +53,6 @@ ggplot(data, aes(x = Pairs, y = Time)) +
 ```
 
 # (2) Residual plot of raw (not transformed) data
-# This is the ONLY correct residual plot
 
 ```{r}
 model <- lm(Time ~ Pairs, data = data)
@@ -70,7 +73,8 @@ ggplot(data,
 ```
 
 # (3) Transformations of time to log_time, sqrt_time, inverse_time
-We now try different transformations on the data to see if we can get a better fitted regression line. We try 3 different transformation: log("time"), sqrt("time") and 1/("time").  
+We now try different transformations on the data to see if we can get a better fitted regression line. 
+We try 3 different transformation: log("time"), sqrt("time") and 1/("time").  
 
 ```{r}
 data$log_time <- log2(data$Time)
@@ -82,79 +86,48 @@ head(data)
 Plotting of log_time:
 
 ```{r echo=FALSE, results=FALSE, message=FALSE}
-transform_plots <- function(type, data, Y, transformation) {
-  # type is one of "regres", "resid"
-  data$Y = Y
-  model <- lm(Time ~ Pairs, data = data)
+transform_plots <- function(type, data, Y, transformation, X=data$Pairs) {
+    # type is either "regres", "resid"
+    # data is the our current data frame
+    # Y is the dataset you want to use for the y-axis
+    # transformation is String, can be "log", "sqrt", "inverse"
+
+  data$Y <- Y
+  model <- lm(Y ~ X, data = data)
   y_hat <- predict(model, newdata = data)
+
   result <- switch(
     type,
-    "regres" = ggplot(
-      data,
-      aes(x = Pairs, y = Y)
-    )
+    
+    "regres" = ggplot(data, aes(x = X, y = Y))
     + geom_point()
     + facet_grid(Size ~ Status) 
     + theme(legend.position = "top")
-    + geom_smooth(
-        method = "lm", 
-        formula = y ~ x
-      )
-    + stat_poly_eq(
-      formula = y ~ x,
-      aes(
-        label = paste(
-          after_stat(
-            eq.label
-          ), 
-          after_stat(
-            rr.label
-          ), 
-          sep = "~~~"
-        )
-      ),
-      parse = TRUE
-    )
-    + labs(
-      title = sprintf("Raw data (%s)", transformation)
-    )
-    + ylab(
-      sprintf("Time (%s)", transformation)
-    )
+    + geom_smooth(method = "lm", formula = y ~ x)
+    + stat_poly_eq(formula = y ~ x, aes(label = paste(after_stat(eq.label), 
+          after_stat(rr.label), sep = "~~~")), parse = TRUE)
+    + labs(title = sprintf("(%s) transformation", transformation))
+    + ylab(sprintf("Time (%s)", transformation))
     + theme_bw(),
     
     "resid" = ggplot(
       data,
-      mapping = aes(
-        x = y_hat,
-        y = resid(
-          lm(
-              Y ~ Pairs, 
-              data = data
-            )
-          )
-        )
-      )
+      mapping = aes(x = y_hat, y = resid(lm(Y ~ Pairs, data = data))))
     + geom_point()
     + facet_grid(Size ~ Status)
-    + geom_hline(
-        yintercept = 0, 
-        color = "red"
-      )
+    + geom_hline(yintercept = 0, color = "red")
     + xlab("Predicted value")
     + ylab("Standarized Residuals")
-    + labs(
-      title = sprintf(
-        "Standardized Residual Plot (raw data) (%s transformation)",
-        transformation)
-      )
+    + labs(title = sprintf("Standardized Residual Plot (%s transformation)",
+        transformation))
     + theme_bw()
     + theme(plot.title = element_text(hjust = 0.5))
     + theme(legend.position = "bottom")
-
   )
+
   return(result)
 }
+
 
 for (transformation in c("log", "sqrt", "inverse")) {
   new_Y <- switch(
@@ -169,11 +142,15 @@ for (transformation in c("log", "sqrt", "inverse")) {
 ```
 As we can see, the downward trend of the points is no longer apparent. 
 # (4)  Removing outliers and comparing  
-We now proceed to remove outliers to see to what degree they affect the final result. We have opted to only graph and compare the logarithmic graph, as it has the best fit. We start by removing the maximum from the four plots:
+We now proceed to remove outliers to see to what degree they affect the final result. 
+We have opted to only graph and compare the logarithmic graph, as it has the best fit. 
+We start by removing the maximum from the four plots:
 ```{r}
 # Find the max and min values for each of the four plots
 get_outliers <- function(data) {
-  # Finds residual outliers and returns a vector in the form of (logical_max, logical_min) where logical_max is a vector of TRUE for the max value and FALSE everywhere else, and logical_min is the opposite.
+  # Finds residual outliers and returns a vector in the form of (logical_max, logical_min) 
+  # where logical_max is a vector of TRUE for the max value and FALSE everywhere else, 
+  #and logical_min is the opposite.
   residuals = resid(lm(log2(Time) ~ Pairs, data = data))
   outliers <- c(
     max(residuals),
@@ -185,6 +162,8 @@ get_outliers <- function(data) {
   )
   return(logicals)
 }
+
+
 LR_mx <- get_outliers(data[
   data$Size == "L" &
   data$Status == "R",
@@ -236,5 +215,94 @@ max_filt_data <- data[-to_remove_ids,]
 new_Y <- log2(max_filt_data$Time) # Need to redefine this because the row count has changed
 print(transform_plots("regres", max_filt_data, new_Y, "log"))
 ```
-Just removing the two extremes from the plots managed to increase one of our $R^2$ values from $0.53$ to $0.93$, an incredible improvement. Despite the fact that removing outliers improved the fit tremendously, it is a bad idea to do so. Data should only be removed if it has been either measured or written down incorrectly. Removing real data points is cherry-picking, and outliers can be a valuable insight into the data that has been collected. The mere fact that they can change line fittings this way is a testament to their influence - and thus their importance.  
-q
+Just removing the two extremes from the plots managed to increase one of our $R^2$ values from $0.53$ to $0.93$, an incredible improvement. 
+Despite the fact that removing outliers improved the fit tremendously, it is a bad idea to do so. 
+Data should only be removed if it has been either measured or written down incorrectly. 
+Removing real data points is cherry-picking, and outliers can be a valuable insight into the data that has been collected. 
+The mere fact that they can change line fittings this way is a testament to their influence - and thus their importance.  
+
+# (5)  Should "Pairs" variable be transformed as well?
+Assess whether there is a linear relationship between log('time') and log('pairs') for each of the four sub-plots.
+Thus, we are essentially plotting a log-log plot.
+
+In the analysis and plot below, log-log and log(time) transformation all
+seem to yield a linear relationship with about the same $R^2$ value.
+
+```{r}
+# transform "Pairs" variable to log_pairs
+data$log_pairs <- log2(data$Pairs)
+
+ggplot(data, aes(x = log_pairs, y = log_time)) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  theme(legend.position = "top") +
+  geom_smooth(method = "lm", formula = y ~ x) +
+  
+  stat_poly_eq(formula = y ~ x,
+  aes(label = paste(after_stat(eq.label), after_stat(rr.label), sep = "~~~")),
+  parse = TRUE) +
+  
+  labs(title = "Log-log transformation") +
+  theme_bw()
+```
+
+```{r}
+model <- lm(log_time ~ log_pairs, data = data)
+y_hat <- predict(model, newdata = data)
+
+ggplot(data,
+  mapping = aes(x = y_hat,
+                y = resid(lm(log_time ~ log_pairs, data = data)))) +
+  geom_point() +
+  facet_grid(Size ~ Status) +
+  geom_hline(yintercept = 0, color = "red") +
+  xlab("Predicted value") +
+  ylab("Standarized Residuals") +
+  labs(title = "Standardized Residual Plot (raw data)") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = "bottom")
+```
+
+#(6) Null hypothesis: the slopes of all four combinations of "size" and "migratory status" are equal.
+Test this hypothesis.
+```{r}
+# data2, where Size_Status is in one column
+data2 <- data.frame(
+  Pairs = data$Pairs,
+  log_time = data$log_time,
+  Size_Status = paste(data$Size, data$Status, sep = "")
+)
+head(data2)
+```
+```{r}
+# Analysis of variance table (ANOVA)
+m.interaction <- lm(log_time ~ Pairs * Size_Status, data = data2)
+anova(m.interaction)
+```
+```{r}
+# Obtain slopes
+m.interaction$coefficients
+m.lst <- lstrends(m.interaction, "Size_Status", var="Pairs")
+```
+Based on the p-values, none of the comparisons are statistically significant at a significance level of 0.05. This means that there is not enough evidence to conclude that the slopes are different between any of the groups.
+```{r}
+# Compare slopes
+pairs(m.lst)
+```
+Visualize our result
+```{r}
+ggplot(data2,
+    mapping = aes(x = Pairs,
+                    y = log_time,
+                    color = Size_Status)) +
+    geom_point() +
+    geom_smooth(method = "lm", formula = y ~ x) +
+    labs(title = "Linear models for Size_Status combination") +
+    theme_bw()
+```
+
+
+
+
+
