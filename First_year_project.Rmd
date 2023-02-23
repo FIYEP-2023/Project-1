@@ -35,7 +35,7 @@ head(data <- read.csv('Factors_Affecting_Extinction.csv', header=T))
 
 # (1) Initial Plotting
 
-There are four different combinations of Size and Status, LR (Large Resident), LM (Large Migrant), SR (Small Resident) and SM (Small Migrant. If we want to find the correlation between *extinction time* as a function of *pairs*, we can make a regression line with *pairs* as the predictor value and *extinction time* as the predicted value.
+There are four different combinations of Size and Status, LR (Large Resident), LM (Large Migrant), SR (Small Resident) and SM (Small Migrant). If we want to find the correlation between *extinction time* as a function of *pairs*, we can make a regression line with *pairs* as the predictor value and *extinction time* as the predicted value.
 
 ```{r}
 ggplot(data, aes(x = Pairs, y = Time)) +
