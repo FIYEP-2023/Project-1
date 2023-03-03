@@ -1,0 +1,229 @@
+---
+title: "First Year Project: Extinction prediciton"
+output: pdf_document
+date: "2023-03-03"
+---
+
+```{r setup, include=FALSE, results=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE, results=FALSE, message=FALSE}
+if (!require("pacman")) install.packages("pacman")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("ggpmisc")) install.packages("ggpmisc")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("ggsignif")) install.packages("ggsignif")
+if (!require("nlme")) install.packages("nlme")
+if (!require("lsmeans")) install.packages("lsmeans")
+```
+
+```{r, echo=FALSE, results=FALSE, message=FALSE}
+library("ggplot2")
+library("ggpmisc")
+library("ggpubr")
+library("ggsignif")
+library("caret")
+library(tibble)
+library(ggplot2)
+library(broom)
+library(nlme)
+library(lsmeans)
+```
+
+
+We start by importing the dataset directly from the csv file and saving it to the data variable:
+
+```{r}
+head(data <- read.csv('Factors_Affecting_Extinction.csv', header=T))
+```
+
+1.
+
+Multivariate linear regression model:
+
+```{r}
+#Using dummy coding to represent size and status as binary values
+size_dummies <- model.matrix(~ 0 + Size, data)
+status_dummies <- model.matrix(~ 0 + Status, data)
+
+#Combine raw data with dummy variables
+transformed_data <- cbind(data, size_dummies, status_dummies)
+head(transformed_data)
+
+#Multivariate regression model
+mvr = lm(Time ~ Pairs + SizeL + SizeS + StatusM + StatusR, data = transformed_data)
+summary(mvr)
+```
+
+Adjusted R^2 value is 0.2645, i.e., not very impressive. However, the p-value is very low, implying a correlation between the predictor and predicted variables. Note that SizeS and StatusR show NA as they have no direct effect on the predictor variable, since they are directly correlated to SizeL and StatusR, respectively. 
+
+2.
+
+Multivariate linear regression model:
+
+```{r}
+mvr_predicted_values <- fitted(mvr)
+mvr_residuals <- residuals(mvr)
+
+plot(
+  mvr_predicted_values, 
+  mvr_residuals,
+  main = "Residual Plot (Multivariate Regression)",
+  xlab = "Predicted Values",
+  ylab = "Residuals"
+  )
+
+abline(h = 0, col = "red")
+```
+
+3.
+
+Multivariate Regression transformations:
+
+```{r}
+transformed_data$log_time <- log2(data$Time)
+transformed_data$sqrt_time <- sqrt(data$Time)
+transformed_data$inv_time <- 1/data$Time
+head(data)
+```
+
+```{r}
+#Creating new MVR models using the transformed time values
+mvr_log <- lm(log_time ~ Pairs + SizeL + SizeS + StatusM + StatusR, data = transformed_data)
+mvr_sqrt <- lm(sqrt_time ~ Pairs + SizeL + SizeS + StatusM + StatusR, data = transformed_data)
+mvr_inv <- lm(inv_time ~ Pairs + SizeL + SizeS + StatusM + StatusR, data = transformed_data)
+
+#Finding predicted values
+pred_vals_log <- fitted(mvr_log)
+pred_vals_sqrt <- fitted(mvr_sqrt)
+pred_vals_inv <- fitted(mvr_inv)
+
+#Finding residuals
+resids_log <- residuals(mvr_log)
+resids_sqrt <- residuals(mvr_sqrt)
+resids_inv <- residuals(mvr_inv)
+
+#Printing mvr summaries
+print("Summary of mvr with log2 time transformation:")
+summary(mvr_log)
+
+print("Summary of mvr with sqrt time transformation:")
+summary(mvr_sqrt)
+
+print("Summary of mvr with inverse transformation:")
+summary(mvr_inv)
+```
+```{r}
+#Plotting residuals
+plot(
+    pred_vals_log,
+    resids_log,
+    main = "Residual Plot (log2 transformation)",
+    xlab = "Predicted Values (log2)",
+    ylab = "Residuals"
+  )
+abline(h = 0, col = "red")
+
+plot(
+    pred_vals_sqrt,
+    resids_sqrt,
+    main = "Residual Plot (sqrt transformation)",
+    xlab = "Predicted Values (sqrt)",
+    ylab = "Residuals"
+  )
+abline(h = 0, col = "red")
+
+plot(
+    pred_vals_inv,
+    resids_inv,
+    main = "Residual Plot (inverse transformation)",
+    xlab = "Predicted Values (inverse)",
+    ylab = "Residuals"
+  )
+abline(h = 0, col = "red")
+```
+
+
+The inverse transformation seems to be the best fit when looking at both the summary and the multivariate residuals.
+
+4. Removing outliers from the inverse transformation
+
+```{r}
+#Define outliers and logicals
+outliers <- c(max(resids_inv), min(resids_inv))
+logicals <- data.frame(max = resids_inv == outliers[1], min = resids_inv == outliers[2])
+
+#Get row ID's of outliers
+outlier_ids <- which(logicals$max | logicals$min)
+
+#Remove outlier rows from data frame
+data_no_outliers <- transformed_data[-outlier_ids,]
+
+#Create new mvr model without outliers
+mvr_inv_no_outliers <- lm(inv_time ~ Pairs + SizeL + SizeS + StatusM + StatusR, data = data_no_outliers)
+
+#New fitted values and residuals
+new_pred_vals_inv <- fitted(mvr_inv_no_outliers)
+new_resids_inv <- residuals(mvr_inv_no_outliers)
+
+#Printing summary of model without outliers
+summary(mvr_inv_no_outliers)
+
+#Plotting residuals without outliers
+plot(
+  new_pred_vals_inv,
+  new_resids_inv,
+  main = "Residual Plot (inverse transformation)",
+  sub = "Smallest and Biggest outlier removed",
+  xlab = "Predicted Values (inverse)",
+  ylab = "Residuals"
+)
+abline(h = 0, col = "red")
+```
+Removing the smallest and largest outliers has improved the fit of the model (adjusted R^2 is now 0.6357 instead of 0.5833), and the P-value is also lower now. However, it is of course not sensible to just remove data points to get a better unless there is a good reason to do so.
+
+5.
+
+It does not make sense to answer this with a multivariate regression.
+
+6.
+
+Same as point 5.
+
+7. 
+
+Creating a reduced model, firstly by removing SizeS and StatusR as they are basically irrelevant when we have SizeL and StatusM. Thereafter continuouslyremoving the predictor variable with the highest individual p-value until all p-values are below 0.05
+
+```{r}
+#Reduced models, not transforming time
+
+#Removing SizeS and StatusR
+reduced_mvr1 <- lm(Time ~ Pairs + SizeL + StatusM, data = transformed_data)
+print("Summary of first reduced model, no time transformation")
+summary(reduced_mvr1) #Identical to mvr
+
+#Removing StatusM
+reduced_mvr2 <- lm(Time ~ Pairs + SizeL, data = transformed_data)
+print("Summary of second reduced model, no time transformation")
+summary(reduced_mvr2)
+
+#Removing SizeL
+reduced_mvr3 <- lm(Time ~ Pairs, data = transformed_data)
+print("Summary of third reduced model, no time transformation")
+summary(reduced_mvr3)
+```
+Even though we have reduced the model following the p-value threshold of 0.05, this last model makes little sense, as it is simply comparing the pairs and time variables, having complety removed the size and status variables. This implies that the correlation between the size and status of the birds might be insignificant when compared to the linear time variable.
+
+Trying with the inverse transformation of time:
+
+```{r}
+#Reduced models, inverse transformation of time
+
+#Removing SizeS and StatusR
+reduced_mvr_inv <- lm(inv_time ~ Pairs + SizeL + StatusM, data = transformed_data)
+print("Summary of first reduced model, inverse time transformation")
+summary(reduced_mvr_inv) #Identical to mvr_inv
+```
+
+The final reduced model is nothing more than a simplification of the original inverse time model (SizeS and StatusR being the only removed variables, both of which were directly correlated to other variables), providing the exact same results. However, there was no need to reduce it further, since the individual p-values of all three predictor values were below 0.05, i.e., all three were significantly associated with the dependent variable inverse of time. This implies that a transformed version of time are more influenced by the independent variables than the standard linear version.
