@@ -301,7 +301,7 @@ ggplot(data2,
     labs(title = "Linear models for Size_Status combination") +
     theme_bw()
 ```
-
+LR and SR may suppressor variables?
 
 
 

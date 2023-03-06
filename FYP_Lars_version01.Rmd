@@ -1,0 +1,291 @@
+---
+title: "First Year Project: Extinction prediciton"
+output: pdf_document
+date: "2023-02-07"
+---
+
+```{r setup, include=FALSE, results=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE, results=FALSE, message=FALSE}
+if (!require("pacman")) install.packages("pacman")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("ggpmisc")) install.packages("ggpmisc")
+if (!require("ggpubr")) install.packages("ggpubr")
+if (!require("ggsignif")) install.packages("ggsignif")
+if (!require("nlme")) install.packages("nlme")
+if (!require("lsmeans")) install.packages("lsmeans")
+library("ggplot2")
+library("ggpmisc")
+library("ggpubr")
+library("ggsignif")
+library(tibble)
+library(ggplot2)
+library(broom)
+library(nlme)
+library(lsmeans)
+```
+
+Print of raw data:
+
+```{r}
+(data <- read.csv('Factors_Affecting_Extinction.csv', header=T))
+```
+Size and Status are dichotomous predictors. Transform them into dummy variables. 
+In Size column, replace S = 0, L = 1
+In Status column, replace R = 0, M = 1
+
+```{r}
+# create a new dataframe copy
+dummy_data <- data
+
+# transform Size and Status categorical variable into dummy variables
+dummy_data$Size <- as.numeric(dummy_data$Size == "L")
+dummy_data$Status <- as.numeric(dummy_data$Status == "M")
+
+dummy_data
+```
+Distribution of data for each variable:
+For pairs:
+```{r}
+hist(dummy_data$Pairs, main="Pairs", xlab="Pairs", ylab="Frequency")
+```
+For Size:
+```{r}
+hist(dummy_data$Size, main="Size", xlab="Size", ylab="Frequency")
+```
+For Status:
+```{r}
+hist(dummy_data$Status, main="Status", xlab="Status", ylab="Frequency")
+```
+Step 1:
+Perform linear regression of full model: 
+```{r}
+full_model = lm(Time ~ Pairs + Size + Status, data=dummy_data)
+summary(full_model)
+```
+The linear regression model has been performed on the full data set, where the response variable (dependent variable) is Time, and the independent variables are Pairs, Size, and Status. The model summary shows that the intercept is -1.0265 and the estimated coefficients for Pairs, Size, and Status are 2.1339, 3.9269, and -3.53, respectively.
+
+The p-value for the Pairs coefficient is < 0.001, indicating that there is a significant positive relationship between the number Pairs and the time taken for the species to become extinct.
+
+The p-value for the Size coefficient is 0.099, indicating that there is no significant relationship between the size of the individuals and the time taken for the species to become extinct. The p-value for the Status coefficient is 0.175, indicating that there is no significant relationship between the status of the habitat and the time taken for the species to become extinct.
+
+The multiple R-squared value of 0.3007 suggests that the model explains around 30% of the variability in the response variable, while the adjusted R-squared value of 0.2645 suggests that the model may not be the best fit for the data. The F-statistic of 8.312 and its associated p-value of 0.0001097 indicate that the overall model is significant.
+
+In summary, the linear regression model suggests that the number of individuals present (Pairs) is positively related to the time taken for the species to become extinct, while the size of the individuals (Size) and the status of the habitat (Status) do not have a significant effect on the time taken for the species to become extinct. However, the model may not be the best fit for the data, as the adjusted R-squared value is relatively low.
+
+
+# Step 2:
+Examine the data set for possible transformations and outliers: Make a
+residual plot from the fit of the model. What can you tell based on the
+residual plot? (i.e. fit of the model/ possible transformations needed +
+outliers)?
+
+    A plot of the residuals vs. fitted values, which helps us identify any patterns or outliers in the data that may be affecting the model's fit.
+
+    A normal Q-Q plot, which helps us assess whether the residuals are normally distributed.
+
+    A plot of the residuals vs. leverage, which helps us identify any influential data points that may be having a disproportionate impact on the model's fit.
+
+    A plot of the Cook's distance values, which helps us identify any outliers or influential observations in the data.
+
+```{r}
+# Diagnostic plots
+par(mfrow = c(2,2))
+plot(full_model)
+```
+Q-Q plot:
+The plot suggests that the standardised residuals are approximately normally
+distributed, although there are a some large positive standardised residuals than
+expected. This indicates a slight positive skew. 
+
+Residuals:
+There is an indication of mild heteroscedasticity: the spread of values is largest for predicted values between 10 to 20, and narrows towards the edge of the plot. This suggests tendency for the residual variance to get larger for birds with high inverse extinction time. It is however, not unusually for the variance to increase with the mean. 
+
+
+```{r}
+# get the standardized residuals from the full model
+std_resid <- rstandard(full_model)
+
+# sort the standardized residuals in decreasing order
+sorted_resid <- sort(std_resid, decreasing = TRUE)
+
+# extract the top 3 positive residuals
+top_3_pos <- head(sorted_resid[sorted_resid > 0], n = 3)
+
+# find the corresponding observations in the data
+obs <- dummy_data[which(std_resid %in% top_3_pos), ]
+
+# print the observations
+print(obs)
+```
+The above 3 species show the largest three positive residuals as also illustrated in the graphs above. These are also the most influential data points as per Cook's distance.
+
+
+# Step 4:
+Examine the effect of removing the largest three positive residuals from the data set and how it affects our linear model.
+```{r}
+# create a new dataframe without rows 28, 29, 60
+cheat_data <- subset(dummy_data, !(row.names(dummy_data) %in% c(28, 29, 60)))
+
+# fit linear model on cheat_data
+cheat_model <- lm(Time ~ Pairs + Size + Status, data = cheat_data)
+
+# summarize the model
+summary(cheat_model)
+```
+Comparing the output to the previous model, we see that the coefficients and p-values have changed. 
+
+Specifically, the coefficient for the Pairs predictor has decreased, and the p-value has decreased as well, indicating a more significant but less impactful relationship between Time and Pairs.
+
+Additionally, the coefficient for Size becomes statistically significant.
+
+Adjusted R-squared value is largely unchanged. 
+
+Overall, upon deleting this outliers from the data set and re-estimating the model, the coefficient estimates are almost the same as before. So there is no reason to think that the conclusions are strongly influenced by including these bird species, and therefore there is no reason to exclude them.
+
+
+
+# Step 3:
+Try the following transformations log(”time”), sqrt(”time”) and 1/(”time”).
+Which seems to be the best fit (examine residual plots)?
+
+```{r}
+# Fit linear model with log(Time) transformation
+log_model <- lm(log(Time) ~ Pairs + Size + Status, data = cheat_data)
+
+# Residual plot for log(Time) transformation
+plot(log_model, which = 1)
+```
+```{r}
+# Fit linear model with sqrt(Time) transformation
+sqrt_model <- lm(sqrt(Time) ~ Pairs + Size + Status, data = cheat_data)
+
+# Residual plot for sqrt(Time) transformation
+plot(sqrt_model, which = 1)
+```
+```{r}
+# Fit linear model with 1/Time transformation
+inv_model <- lm(I(1/Time) ~ Pairs + Size + Status, data = cheat_data)
+
+# Residual plot for 1/Time transformation
+plot(inv_model, which = 1)
+```
+From the residual plot, we can see that the log transformation of "Time" results in a best fit as there is less pattern in the residuals. However, there are still a few outliers with large residuals.
+
+
+# Step 5:
+Should the ”pairs” variable be transformed: Make an informal assessment
+of whether or not there are linear relationships between log(”time”) versus
+”pairs” in all four combinations of ”size” and ”migratory status”. (Hint:
+dead end)
+
+```{r}
+# Create a new column with log transformed time
+data$logTime <- log(data$Time)
+
+# Create scatterplot matrix with different colors for each combination of size and migratory status
+ggplot(data, aes(x = Pairs, y = logTime, color = interaction(Size, Status))) +
+  geom_point() +
+  facet_grid(Size ~ Status, scales = "free") +
+  labs(x = "Pairs", y = "Log(Time)", color = "Size & Status")
+```
+Based on the scatterplot matrix, we can visually assess whether or not there are linear relationships between log(time) and pairs in each panel. If there is a linear relationship, we would expect to see the points form a roughly straight line. If there is no linear relationship, we would expect to see the points scattered randomly.
+
+If we observe a linear relationship in one or more panels, we can consider transforming the pairs variable to improve the linear relationship. One possible transformation is taking the square root or logarithm of pairs. However, it's important to note that transformations should only be applied if they make substantive sense for the variable in question and the research question at hand.
+
+
+# Step 6:
+Take into consideration either of the two following 1) Are the slopes for all
+four combinations of ”size” and ”migratory status” are equal, and why/ why
+not.
+
+To assess whether the slopes for all four combinations of "size" and "migratory status" are equal, we can fit a linear model with an interaction term between "pairs" and the combination of "size" and "migratory status". The interaction term will allow us to test whether the effect of "pairs" on "time" differs across the four combinations.
+
+```{r}
+full_model <- lm(logTime ~ Pairs * Size * Status, data = data)
+anova(full_model)
+```
+Based on the ANOVA output for the regression of logTime on pairs, size, and migratory status, we can assess whether the slopes for all four combinations of size and migratory status are equal.
+
+Looking at the interaction terms, we can see that none of them are statistically significant at the 0.05 level, except for Pairs:Size which has a p-value of 0.203. This suggests that there is no evidence of a significant interaction effect between Pairs and Size, Pairs and Status, Size and Status, or Pairs, Size, and Status combined.
+
+Therefore, we can conclude that the slopes for all four combinations of size and migratory status are equal, as there is no evidence to suggest otherwise.
+
+Visualize our result
+```{r}
+data2 <- data.frame(
+  Pairs = data$Pairs,
+  log_time = data$logTime,
+  Size_Status = paste(data$Size, data$Status, sep = "")
+)
+
+ggplot(data2,
+    mapping = aes(x = Pairs,
+                    y = log_time,
+                    color = Size_Status)) +
+    geom_point() +
+    geom_smooth(method = "lm", formula = y ~ x) +
+    labs(title = "Linear models for Size_Status combination") +
+    theme_bw()
+```
+Make nested models and asses contributions or no contributions of
+variables and interaction of variables.
+
+Add a logTime column to dummy_data:
+```{r}
+dummy_data$logTime <- log2(dummy_data$Time)
+```
+
+To compare the models, we can use the adjusted R^2 statistics to see whether the addition of variables or interaction terms significantly improves the model fit. Here are the nested models:
+
+Model 1: logTime ~ Pairs
+Model 2: logTime ~ Pairs + Size
+Model 3: logTime ~ Pairs + Status
+Model 4: logTime ~ Pairs + Size + Status
+Model 5: logTime ~ Pairs + Size * Status
+Model 6: logTime ~ Pairs * Size + Status
+Model 7: logTime ~ Pairs * Status + Size
+Model 8: logTime ~ Pairs * Size * Status
+
+```{r}
+# Fit the 8 models
+model1 <- lm(logTime ~ Pairs, data=dummy_data)
+model2 <- lm(logTime ~ Pairs + Size, data=dummy_data)
+model3 <- lm(logTime ~ Pairs + Status, data=dummy_data)
+model4 <- lm(logTime ~ Pairs + Size + Status, data=dummy_data)
+model5 <- lm(logTime ~ Pairs + Size * Status, data=dummy_data)
+model6 <- lm(logTime ~ Pairs * Size + Status, data=dummy_data)
+model7 <- lm(logTime ~ Pairs * Status + Size, data=dummy_data)
+model8 <- lm(logTime ~ Pairs * Size * Status, data=dummy_data)
+
+# Obtain the adjusted R^2 statistics for each model
+summary(model1)$adj.r.squared
+summary(model2)$adj.r.squared
+summary(model3)$adj.r.squared
+summary(model4)$adj.r.squared
+summary(model5)$adj.r.squared
+summary(model6)$adj.r.squared
+summary(model7)$adj.r.squared
+summary(model8)$adj.r.squared
+```
+The adjusted R-squared values indicate that Model 4 (logTime ~ Pairs + Size + Status) has the highest adjusted R-squared value of 0.5776, when not taking interactions into account, which means this model explains more variance in the response variable than the other three aforementioned models. Therefore, based on adjusted R-squared, Model 4, i.e. the full model, would be the best choice among these four models.
+
+The adjusted R-squared values indicate there is no markedly improved benefit in controlling for interactions. 
+
+
+# Step 7:
+Make a reduced model based on your findings for previous items.
+
+Reduced model could be Model 2 (logTime ~ Pairs + Size), which only includes the variables Pairs and Size and still provide a reasonable R^2 value. 
+
+```{r}
+reduced_model = lm(logTime ~ Pairs + Size, data=dummy_data)
+summary(reduced_model)
+```
+We see a positive effect of large Size on extinction time. 
+
+
+Step 8:
+The number of pairs is predictive of extinction time. Both large Size and residential Status have positive effect on extinction time. However, compared to Status, Size has a greater effect.

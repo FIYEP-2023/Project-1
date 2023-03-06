@@ -16,6 +16,7 @@ if (!require("ggpubr")) install.packages("ggpubr")
 if (!require("ggsignif")) install.packages("ggsignif")
 if (!require("nlme")) install.packages("nlme")
 if (!require("lsmeans")) install.packages("lsmeans")
+if (!require("caret")) install.packages("caret")
 ```
 
 ```{r, echo=FALSE, results=FALSE, message=FALSE}
