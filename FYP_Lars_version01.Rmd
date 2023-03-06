@@ -82,13 +82,6 @@ residual plot from the fit of the model. What can you tell based on the
 residual plot? (i.e. fit of the model/ possible transformations needed +
 outliers)?
 
-    A plot of the residuals vs. fitted values, which helps us identify any patterns or outliers in the data that may be affecting the model's fit.
-
-    A normal Q-Q plot, which helps us assess whether the residuals are normally distributed.
-
-    A plot of the residuals vs. leverage, which helps us identify any influential data points that may be having a disproportionate impact on the model's fit.
-
-    A plot of the Cook's distance values, which helps us identify any outliers or influential observations in the data.
 
 ```{r}
 # Diagnostic plots
