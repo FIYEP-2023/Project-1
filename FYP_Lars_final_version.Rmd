@@ -53,11 +53,11 @@ hist(dummy_data$Pairs, main="Pairs", xlab="Pairs", ylab="Frequency")
 ```
 For Size:
 ```{r}
-hist(dummy_data$Size, main="Size", xlab="Size", ylab="Frequency")
+barplot(table(dummy_data$Size), main="Size", xlab="Size", ylab="Frequency")
 ```
 For Status:
 ```{r}
-hist(dummy_data$Status, main="Status", xlab="Status", ylab="Frequency")
+barplot(table(dummy_data$Status), main="Status", xlab="Status", ylab="Frequency")
 ```
 Step 1:
 Begin with describing and fitting a full model in which the intercepts and
