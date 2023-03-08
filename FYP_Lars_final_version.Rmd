@@ -186,7 +186,7 @@ not.
 To assess whether the slopes for all four combinations of "size" and "migratory status" are equal, we can fit a linear model with an interaction term between "pairs" and the combination of "size" and "migratory status". The interaction term will allow us to test whether the effect of "pairs" on "time" differs across the four combinations.
 
 ```{r}
-full_model <- lm(logTime ~ Pairs * Size * Status, data = data)
+full_model <- lm(log(Time) ~ Pairs * Size * Status, data = data)
 anova(full_model)
 ```
 Based on the ANOVA output for the regression of logTime on pairs, size, and migratory status, we can assess whether the slopes for all four combinations of size and migratory status are equal.
