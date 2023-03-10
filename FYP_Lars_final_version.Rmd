@@ -129,6 +129,7 @@ cheat_model <- lm(Time ~ Pairs * Size * Status, data = cheat_data)
 # summarize the model
 summary(cheat_model)
 ```
+
 Comparing the output to the previous model, we see that the coefficients and p-values have largely remained unchanged. 
 
 Specifically, the coefficient for the Pairs predictor has decreased, and the p-value has decreased as well, indicating a more significant but less impactful relationship between Time and Pairs.
@@ -211,7 +212,7 @@ Model 3: logTime ~ Pairs + Size + Status + Pairs:Status
 Model 4: logTime ~ Pairs + Size + Status + Size:Status
 Model 5: logTime ~ Pairs * Size * Status 
 
-```{r}
+```{r, echo=FALSE}
 # Fit the 8 models
 model1 <- lm(logTime ~ Pairs + Size + Status, data=dummy_data)
 model2 <- lm(logTime ~ Pairs + Size + Status + Pairs:Size, data=dummy_data)
@@ -220,10 +221,15 @@ model4 <- lm(logTime ~ Pairs + Size + Status + Size:Status, data=dummy_data)
 model5 <- lm(logTime ~ Pairs * Size * Status, data=dummy_data)
 
 # Obtain the adjusted R^2 statistics for each model
+print("Model 1 R^2:")
 summary(model1)$adj.r.squared
+print("Model 2 R^2:")
 summary(model2)$adj.r.squared
+print("Model 3 R^2:")
 summary(model3)$adj.r.squared
+print("Model 4 R^2:")
 summary(model4)$adj.r.squared
+print("Model 5 R^2:")
 summary(model5)$adj.r.squared
 
 print("======================================")
@@ -267,7 +273,6 @@ The estimated coefficient for Status is -0.69336, which means that on average, m
 The estimated coefficient for the interaction between Pairs and Size is -0.14271, which means that the effect of Pairs on the log of extinction time depends on the size of the bird species. However, this interaction term is not statistically significant at the 0.05 level, meaning that we cannot reject the null hypothesis that the coefficient is equal to zero.
 
 The adjusted R-squared value of 0.5825 indicates that the model explains 58.25% of the variance in the log of extinction time. The F-statistic of 22.28 with a p-value of 4.105e-11 indicates that at least one of the independent variables is significantly associated with the log of extinction time.
-
 
 Step 8:
 In conclusion, the number of pairs is predictive of extinction time. Both large Size and residential Status have positive effect on extinction time. However, compared to Status, Size has a greater effect.
